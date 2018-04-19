@@ -1,0 +1,72 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang="en" xmlns:v-on="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.13/dist/vue.js"></script>
+    <link href='//fonts.googleapis.com/css?family=Lobster&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/space.css' %}">
+</head>
+<body style="background-color:#16cc06">
+    <div class="container-fluid" id="app" >
+        <h1 align="center">Список сообщений</h1>
+        <div class="row" v-for="message in json" style="border: 10px solid #16cc06">
+            <div class="col-xs-12 col-sm-3 col-md-3 col-lg-3" style="background-color: #16cc06">
+                <button v-on:click="read(message.id)" style="width: 100%; height: 100%">Прочитано</button>
+            </div>
+            <div class="col-xs-12 col-sm-9 col-md-9 col-lg-9" style="background-color: #ffffff">
+                <p>[[ message.text ]]</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var vu =new Vue({
+            el: '#app',
+            url: '',
+            data: {
+                json: [],
+                lastid: null,
+            },
+
+            delimiters: ["[[", "]]"],
+
+            created: function () {
+                fetch('/json')
+                    .then(r => r.json())
+                    .then(json => {
+                        this.json=json;
+                        this.lastid = this.json[this.json.length - 1].id;
+                    });
+            },
+
+            methods: {
+                read: function (id) {
+                    var setread = new XMLHttpRequest();
+                    setread.open("GET", "/api/mark_read?id=" + id, false);
+                    setread.send();
+                }
+            }
+        });
+
+        myVar = setInterval(function () {
+            fetch('/api/get_messages?last_id=' + vu.lastid)
+                .then(r => r.json())
+                .then(json => {
+                    if (json != null) {
+                        if (json.length > 0) {
+                            vu.json = vu.json.concat(json);
+                            vu.lastid = vu.json[vu.json.length - 1].id;
+                        }
+                    }
+                });
+        }, 10000);
+    </script>
+</body>
+</html>
